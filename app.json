@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "SunuDroit",
+    "slug": "sunudroit",
+    "scheme": "sunudroit",
+    "version": "0.2.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "sn.sunudroit.app"
+    },
+    "android": {
+      "package": "sn.sunudroit.app"
+    },
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store",
+      "expo-sqlite",
+      [
+        "expo-notifications",
+        {
+          "color": "#0F7A47"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0F7A47",
+          "dark": {
+            "backgroundColor": "#0F7A47"
+          }
+        }
+      ],
+      "expo-status-bar"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
