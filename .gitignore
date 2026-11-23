@@ -11,3 +11,11 @@ android/
 
 expo-env.d.ts
 # @end expo-cli
+
+
+# macOS
+.DS_Store
+
+# Local secrets: only the example file is shared
+.env.*
+!.env.example
