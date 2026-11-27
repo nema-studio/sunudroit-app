@@ -114,16 +114,21 @@ flowchart TB
     JOBS --> COMPTE & DON
 ```
 
-**Organisation d'un module** (exemple `corpus`) :
+**Organisation d'un module** (exemple `corpus`, DEC-20) : d'abord par sujet, puis par couche.
 
 ```
 sn.sunudroit.corpus
-├── CorpusService.java          ← seule porte d'entrée pour les autres modules
-├── domaine/                    ← entités JPA : Texte, Article, VersionArticle…
-├── depot/                      ← repositories Spring Data
-├── dto/                        ← objets échangés avec l'extérieur
-└── interne/                    ← règles métier, invisibles hors du module
+├── package-info.java           ← le module ; sa racine est la seule partie visible des autres modules
+├── legaltext/                  ← un sujet
+│   ├── domain/                 ← LegalText (entité JPA + règles), enums, LegalTextRepository, exceptions
+│   ├── application/            ← command/ et usecase/ (un use case par action), port/ si système extérieur
+│   └── api/                    ← LegalTextController, requêtes, réponses, gestion des erreurs
+├── amendment/                  ← même découpage
+└── article/                    ← même découpage (à venir)
 ```
+
+Spring Modulith vérifie ces frontières dans un test (`ModularityTests`) : un module qui utilise une classe interne
+d'un autre fait échouer ce test.
 
 Les modules communiquent par **appel de service** (lecture) ou par **événement** (« édition publiée », « don confirmé »),
 ce qui évite les dépendances circulaires.

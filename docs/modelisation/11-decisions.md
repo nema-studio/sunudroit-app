@@ -22,8 +22,11 @@ on ajoute une nouvelle décision qui la **remplace** et on l'indique.
 | DEC-13 | Une version d'article = un instantané complet | 💡 | 22.11.2026 |
 | DEC-14 | Liens partagés vers une page web publique légère | 💡 | 22.11.2026 |
 | DEC-15 | Dons en V2 | 💡 (Q-04) | 22.11.2026 |
-| DEC-16 | API en anglais, domaine et base en français | 💡 | 22.11.2026 |
+| DEC-16 | API en anglais, domaine et base en français | 💡 remplacée en partie par DEC-18 | 22.11.2026 |
 | DEC-17 | V1 : connexion par e-mail seul ; Google et Apple plus tard | ✅ | 22.11.2026 |
+| DEC-18 | Code, tables et diagrammes de classes en anglais ; documentation en français | ✅ | 23.11.2026 |
+| DEC-19 | API d'administration en JSON (`/api/v1/admin/**`, rôle `EDITOR`) | ✅ | 23.11.2026 |
+| DEC-20 | Dans chaque module : découpage par sujet, puis hexagonale pragmatique | ✅ | 23.11.2026 |
 
 ---
 
@@ -97,3 +100,28 @@ on ajoute une nouvelle décision qui la **remplace** et on l'indique.
 - **Pourquoi** : ces connexions sont gratuites, mais elles coûtent du travail : passage d'Expo Go à une *development build*, vérification des jetons, fusion des comptes, révocation Apple à la suppression, deux parcours de plus à tester. On démarre le backend plus simplement.
 - **Pour plus tard** : on ajoutera Google en priorité si des utilisateurs abandonnent à l'étape du code par e-mail. Proposer Google oblige à proposer aussi Apple sur iPhone (règle 4.8 de l'App Store).
 - **Ce qui rend l'ajout facile** : un compte est identifié par son `id` (UUID), jamais par son adresse. Les connexions externes s'ajouteront dans une nouvelle table `identite_externe (fournisseur, sujet, utilisateur_id)`, sans migrer les comptes existants. Règle prévue : même adresse vérifiée par Google = même compte ; adresse masquée Apple = compte distinct.
+
+### DEC-18 · Noms en anglais dans le code ✅
+- **Remplace** la partie « domaine Java et base en français » de DEC-16. L'API reste en anglais, comme prévu.
+- **Décision** : paquets, classes, méthodes, tests, fichiers, migrations, tables et colonnes en anglais (`LegalText`,
+  `legal_text`, `Amendment`). Les diagrammes de classes ([05](05-modele-domaine.md), [`excalidraw/`](excalidraw/)) portent
+  les mêmes noms. La documentation et les explications restent en français ; la table de correspondance est dans [05](05-modele-domaine.md).
+- **Pourquoi** : convention standard en Java, un seul vocabulaire entre le code, la base et les diagrammes.
+
+### DEC-19 · API d'administration ✅
+- **Contexte** : le contrat ([09](09-api.md)) prévoyait un back-office en pages web seulement, sans API JSON.
+- **Décision** : en plus, une API JSON sous `/api/v1/admin/**`, réservée au rôle `EDITOR` : textes juridiques,
+  registre des révisions, puis le reste du corpus. Elle sert à l'outil d'import (RG-25) et aux tests. Les pages
+  du back-office appelleront les mêmes use cases.
+- **Sécurité** : en développement, un compte `editor` (profil `dev`, HTTP Basic) ; en production, les comptes
+  nominatifs du back-office (DEC-11) le remplaceront.
+
+### DEC-20 · Organisation interne des modules ✅
+- **Décision** : à l'intérieur d'un module, on découpe d'abord **par sujet** (`corpus/legaltext`, `corpus/amendment`,
+  `corpus/article`…), puis **par couche** : `domain` (entité JPA porteuse des règles, repository qui étend
+  `Repository<T, ID>` avec les seules méthodes utiles, exceptions), `application` (un use case par action, commandes,
+  ports vers l'extérieur seulement), `api` (controllers, requêtes, réponses, gestion des erreurs).
+- **Écarté** : l'hexagonale stricte (entité de domaine séparée de l'entité JPA, avec un mapper) : deux fois plus de
+  code et des conversions fragiles sur un domaine en arbre (article, versions, alinéas), sans changement de base prévu.
+- Pas de Lombok : `record` Java pour les données, getters explicites pour les entités.
+

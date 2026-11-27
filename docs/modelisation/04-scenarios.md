@@ -321,9 +321,9 @@ sequenceDiagram
     participant DB as PostgreSQL
 
     Ed->>BO: enregistre la révision 2019-10 (registre)
-    BO->>DB: Revision {statut: À intégrer}
+    BO->>DB: Amendment {integrationStatus: TO_INTEGRATE}
     Ed->>BO: saisit les effets et les nouvelles versions
-    BO->>DB: VersionArticle {statut: Brouillon}
+    BO->>DB: ArticleVersion {editorialStatus: DRAFT}
     Ed->>BO: soumet à relecture
     BO->>DB: statut: En relecture
     Rel->>BO: compare au Journal officiel

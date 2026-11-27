@@ -11,7 +11,7 @@ dans [11 · Décisions](11-decisions.md) et on note ici la décision corresponda
 | Q-02 | **Qui relit** le contenu juridique ? | 🔴 | Un juriste, un étudiant en droit avancé, une clinique juridique (UCAD) ou une association. RG-21 exige au moins deux personnes. |
 | Q-03 | **Nom de domaine** | 🔴 | Nécessaire pour l'API, l'envoi des e-mails (SPF, DKIM, DMARC), la page publique et les mentions légales. |
 | Q-04 | Dons en **V1 ou V2** ? | 🟠 | Recommandé : V2 (DEC-15). Les contrats marchands Wave et Orange Money prennent du temps. |
-| Q-05 | Liste exacte des **révisions depuis 2018** | 🟠 | 2019-10, 2021-41, 2023-13 identifiées ; 2024-15 à confirmer ; révision de 2026 censurée (numéro 17 ou 18/2026 à vérifier). Source : Journal officiel. |
+| Q-05 | Liste exacte des **révisions depuis 2018** | 🟠 | La compilation du Conseil constitutionnel s'arrête à la loi 2018-14, même si vie-publique.sn l'annonce « mise à jour avec la loi n° 2023-13 ». À intégrer : 2019-10, 2021-41, 2023-13 (une version cnra.sn va jusqu'à 2021-41) ; 2024-15 et proposition n° 17/2026 à vérifier. Source qui fait foi : Journal officiel. Le registre (`Amendment.integrationStatus`) suit l'avancement. |
 | Q-06 | **Photo de profil** (E22) ? | ⚪ | Recommandé : non en V1 (initiales seulement). Une photo impose stockage, modération et données en plus. |
 | Q-07 | ~~Boutons **« Avec Google » et « Avec Apple »** (E03)~~ | ✅ | **Tranchée** : retirés en V1, e-mail seul (DEC-17). |
 | Q-08 | **Durée de conservation des reçus** de dons | 🟠 | Durée légale comptable au Sénégal à vérifier (souvent 10 ans). Conditionne RG-45. |

@@ -9,150 +9,175 @@ Deux bases, deux rôles :
 
 Conventions SQL : noms en `snake_case` sans accents, clés primaires `id`, dates en `timestamptz` (UTC),
 dates juridiques en `date`, énumérations en `varchar` avec contrainte `CHECK`. Les migrations sont gérées par Flyway (DEC-12).
+Noms des tables et colonnes **en anglais**, comme le code (DEC-18). Les sections ci-dessous autres que le corpus gardent
+encore les noms français de la première modélisation : elles seront traduites quand chaque module sera développé,
+en suivant la table de correspondance de [05](05-modele-domaine.md).
 
 ---
 
 ## PostgreSQL · Corpus
 
+Tables et colonnes **en anglais**, comme le code (DEC-18). Les tables `legal_text` (V2, V3) et `amendment` (V4)
+sont déjà créées par les migrations du backend ; les autres le seront dans cet ordre : `division`, `article`,
+`article_version` et `paragraph`, puis `amendment_effect`, `editorial_note` et `cross_reference`.
+
 ```mermaid
 erDiagram
-    REVISION ||--o{ EFFET_REVISION : "a pour effets"
-    TEXTE ||--|{ DIVISION : "structure"
-    DIVISION |o--o{ DIVISION : "parent de"
-    DIVISION ||--|{ VERSION_DIVISION : "intitulés"
-    TEXTE ||--|{ ARTICLE : "contient"
-    DIVISION ||--o{ ARTICLE : "range"
-    ARTICLE ||--|{ VERSION_ARTICLE : "versions"
-    VERSION_ARTICLE ||--|{ ALINEA : "alinéas"
-    REVISION ||--o{ VERSION_ARTICLE : "produit"
-    REVISION ||--o{ VERSION_DIVISION : "produit"
-    REVISION |o--o{ ALINEA : "insère"
-    VERSION_ARTICLE ||--o{ NOTE_EDITORIALE : "annotée par"
-    ARTICLE ||--o{ RENVOI : "source"
-    TEXTE ||--o{ RENVOI : "cible"
-    EFFET_REVISION }o--o| ARTICLE : "vise"
-    EFFET_REVISION }o--o| VERSION_ARTICLE : "a produit"
+    LEGAL_TEXT ||--|{ DIVISION : "structure"
+    DIVISION |o--o{ DIVISION : "parent of"
+    DIVISION ||--|{ DIVISION_VERSION : "headings"
+    LEGAL_TEXT ||--|{ ARTICLE : "contains"
+    DIVISION ||--o{ ARTICLE : "holds"
+    ARTICLE ||--|{ ARTICLE_VERSION : "versions"
+    ARTICLE_VERSION ||--|{ PARAGRAPH : "paragraphs"
+    LEGAL_TEXT ||--|{ AMENDMENT : "register"
+    AMENDMENT ||--o{ AMENDMENT_EFFECT : "effects"
+    AMENDMENT ||--o{ ARTICLE_VERSION : "produces"
+    AMENDMENT ||--o{ DIVISION_VERSION : "produces"
+    AMENDMENT |o--o{ PARAGRAPH : "last changed"
+    ARTICLE_VERSION ||--o{ EDITORIAL_NOTE : "annotated by"
+    ARTICLE ||--o{ CROSS_REFERENCE : "source"
+    LEGAL_TEXT ||--o{ CROSS_REFERENCE : "target"
+    AMENDMENT_EFFECT }o--o| ARTICLE : "targets"
+    AMENDMENT_EFFECT }o--o| DIVISION : "targets"
+    AMENDMENT_EFFECT }o--o| ARTICLE_VERSION : "produced"
 
-    TEXTE {
+    LEGAL_TEXT {
         varchar id PK "constitution-2001"
-        varchar type "CONSTITUTION, LOI_ORGANIQUE, DECISION"
-        text intitule_officiel
-        varchar intitule_court "LO 2016-23"
-        text objet
-        date date_adoption
-        varchar jors_numero
-        date jors_date
-        int jors_page
-        varchar statut "EN_VIGUEUR, ABROGE, CENSURE"
-        uuid acte_origine_id FK "revision ACTE_ORIGINE"
+        varchar type "CONSTITUTION, ORGANIC_LAW, DECISION"
+        text official_title
+        varchar short_title "LO 2016-23"
+        text subject "nullable"
+        date adoption_date "referendum for the Constitution"
+        varchar article_id_prefix UK "const, lo-2016-23"
+        varchar journal_number "nullable"
+        date journal_date "nullable"
+        int journal_page "nullable"
+        varchar status "IN_FORCE, REPEALED, STRUCK_DOWN"
+    }
+    AMENDMENT {
+        uuid id PK
+        varchar legal_text_id FK
+        varchar kind "ORIGINAL_ACT, CONSTITUTIONAL_LAW, REFERENDUM, ORGANIC_LAW"
+        varchar number UK "2016-10, nullable"
+        date act_date "nullable, never guessed"
+        text title
+        varchar journal_number "nullable"
+        date journal_date "nullable"
+        int journal_page "nullable"
+        varchar legal_status "PROMULGATED, STRUCK_DOWN, DRAFT"
+        varchar integration_status "TO_INTEGRATE, IN_PROGRESS, INTEGRATED"
     }
     DIVISION {
         uuid id PK
-        varchar texte_id FK
-        uuid parent_id FK "nul pour le premier niveau"
-        varchar nature "PREAMBULE, TITRE, CHAPITRE, SECTION, INTERTITRE"
-        varchar libelle "TITRE VI BIS"
-        numeric position "ordre parmi les sœurs"
+        varchar legal_text_id FK
+        uuid parent_id FK "null at top level"
+        varchar kind "PREAMBLE, TITLE, CHAPTER, SECTION, HEADING"
+        varchar label "TITRE VI BIS, null for a HEADING"
+        numeric position "order among siblings"
     }
-    VERSION_DIVISION {
+    DIVISION_VERSION {
         uuid id PK
         uuid division_id FK
-        text intitule "DES DROITS ET LIBERTES FONDAMENTAUX"
-        date valide_du
-        date valide_au "nul si en vigueur"
-        uuid revision_id FK
-        varchar statut_editorial
+        text heading "DE L ASSEMBLEE NATIONALE, nullable"
+        date valid_from
+        date valid_to "null if current"
+        bool date_uncertain
+        bool repealed
+        uuid amendment_id FK
+        varchar editorial_status
     }
     ARTICLE {
-        varchar id PK "const-art-25-1"
-        varchar texte_id FK
+        varchar id PK "const-art-25-1, never changes"
+        varchar legal_text_id FK
         uuid division_id FK
-        varchar nature "ARTICLE, PREAMBULE"
-        varchar numero "premier, 25-1"
-        varchar cle_tri "00025.001"
-        text resume "rédigé par l'équipe"
-        text_array mots_cles
+        varchar kind "ARTICLE, PREAMBLE"
+        varchar number "premier, 25-1, null for the preamble"
+        varchar sort_key "00025.001"
     }
-    VERSION_ARTICLE {
+    ARTICLE_VERSION {
         uuid id PK
         varchar article_id FK
-        date valide_du
-        date valide_au "nul si en vigueur"
-        bool date_incertaine
-        varchar nature_changement "ORIGINELLE, REMPLACEMENT, MODIFICATION, INSERTION, ABROGATION"
-        bool abrogee
-        uuid revision_id FK
-        varchar statut_editorial
-        uuid saisi_par FK "membre_equipe"
-        timestamptz cree_le
+        date valid_from
+        date valid_to "null if current"
+        bool date_uncertain
+        varchar change_kind "ORIGINAL, REPLACED, AMENDED, INSERTED, REPEALED"
+        bool repealed
+        uuid amendment_id FK
+        varchar editorial_status
+        uuid created_by FK "team_member"
     }
-    ALINEA {
+    PARAGRAPH {
         uuid id PK
-        uuid version_article_id FK
+        uuid article_version_id FK
         int position
-        varchar nature "TEXTE, ELEMENT_LISTE"
-        jsonb segments "texte et renvois cliquables"
-        text texte_brut "pour la recherche"
-        uuid insere_par_revision_id FK
+        varchar kind "TEXT, LIST_ITEM"
+        text content "plain text, for search"
+        jsonb segments "text and clickable references"
+        uuid changed_by_amendment_id FK "null if unchanged"
+        varchar change_kind "INSERTED, REWRITTEN, WORDS_CHANGED"
     }
-    REVISION {
+    AMENDMENT_EFFECT {
         uuid id PK
-        varchar nature "ACTE_ORIGINE, LOI_CONSTITUTIONNELLE, REFERENDUM, LOI_ORGANIQUE"
-        varchar numero UK "2016-10"
-        date date
-        text intitule
-        varchar jors_numero
-        date jors_date
-        int jors_page
-        varchar statut_juridique "PROMULGUEE, CENSUREE, EN_PROJET"
-        varchar statut_integration "A_INTEGRER, EN_COURS, INTEGREE"
-    }
-    EFFET_REVISION {
-        uuid id PK
-        uuid revision_id FK
-        varchar article_de_la_revision "article premier"
+        uuid amendment_id FK
+        varchar provision "Article premier, Article unique"
         varchar operation
-        text formulation_officielle
-        varchar cible_article_id FK
-        uuid cible_division_id FK
-        uuid version_produite_id FK
-        bool applique
+        text official_wording "verbatim from the Journal"
+        varchar target_article_id FK "one target per row"
+        uuid target_division_id FK
+        uuid produced_version_id FK
+        bool applied
     }
-    NOTE_EDITORIALE {
+    EDITORIAL_NOTE {
         uuid id PK
-        uuid version_article_id FK
-        uuid alinea_id FK
-        varchar nature
-        text texte
+        uuid article_version_id FK
+        int paragraph_position "null for the whole article"
+        varchar kind
+        text content
         text source
-        varchar statut_editorial
+        varchar editorial_status
     }
-    RENVOI {
+    CROSS_REFERENCE {
         uuid id PK
-        varchar article_source_id FK
-        varchar type "PRECISE_PAR, CITE_PAR, RENVOIE_A"
-        varchar libelle
-        varchar cible_texte_id FK
-        uuid cible_division_id FK
-        varchar cible_article_id FK
-        varchar statut_editorial
+        varchar source_article_id FK
+        varchar kind "SPECIFIED_BY, CITED_BY, REFERS_TO"
+        varchar label
+        varchar target_legal_text_id FK
+        uuid target_division_id FK
+        varchar target_article_id FK
+        varchar editorial_status
     }
 ```
+
+Toutes les tables ont aussi `created_at`, `updated_at` (`timestamptz`) et `version` (`bigint`, verrouillage optimiste) ;
+elles ne sont pas répétées dans le diagramme.
 
 ### Contraintes et index du corpus
 
 | Contrainte | Implémentation PostgreSQL | Règle |
 |---|---|---|
-| Pas de chevauchement de versions validées d'un même article | `EXCLUDE USING gist (article_id WITH =, daterange(valide_du, valide_au) WITH &&) WHERE (statut_editorial = 'VALIDEE')` (extension `btree_gist`) | RG-04 |
-| Une seule version en vigueur validée par article | Index unique partiel sur `article_id` où `valide_au IS NULL AND statut_editorial = 'VALIDEE'` | RG-04 |
+| Identifiant de texte lisible | `CHECK (id ~ '^[a-z0-9]+(-[a-z0-9]+)*$')` (migration V2) | RG-01 |
+| Un seul acte d'origine par texte | Index unique partiel sur `amendment (legal_text_id) WHERE kind = 'ORIGINAL_ACT'` (migration V4) | RG-05 |
+| Numéro de révision unique | `UNIQUE (number)` ; plusieurs révisions sans numéro restent possibles | |
+| Pas de chevauchement de versions validées d'un même article | `EXCLUDE USING gist (article_id WITH =, daterange(valid_from, valid_to) WITH &&) WHERE (editorial_status IN ('APPROVED', 'PUBLISHED'))` (extension `btree_gist`) | RG-04 |
+| Une seule version en vigueur par article | Index unique partiel sur `article_id` où `valid_to IS NULL AND editorial_status IN ('APPROVED', 'PUBLISHED')` | RG-04 |
+| Même règle pour les intitulés de division | Mêmes contraintes sur `division_version (division_id, …)` | RG-11 |
 | Identifiant d'article jamais réutilisé | Pas de suppression physique d'un article ; `id` immuable | RG-01 |
-| Numéro unique dans un texte | `UNIQUE (texte_id, numero)` | RG-02 |
-| Révision censurée sans effet | `CHECK` applicatif : aucune `version_article` ne référence une révision `CENSUREE` | RG-09 |
-| Ordre des articles | Index sur `(texte_id, cle_tri)` | RG-02 |
-| Recherche plein texte côté back-office | Colonne générée `tsvector` sur `alinea.texte_brut` avec la configuration `french` + `unaccent`, index GIN | |
+| Numéro unique dans un texte | `UNIQUE (legal_text_id, number)` | RG-02 |
+| Préfixe d'article unique | `UNIQUE (article_id_prefix)` sur `legal_text` | RG-01 |
+| Révision non promulguée sans effet | Vérifié par le use case (`Amendment.canChangeTheLaw()`) : aucune `article_version` ne référence une révision `STRUCK_DOWN` ou `DRAFT` | RG-09 |
+| Ordre des articles | Index sur `(legal_text_id, sort_key)` | RG-02 |
+| Recherche plein texte côté back-office | Colonne générée `tsvector` sur `paragraph.content` avec la configuration `french` + `unaccent`, index GIN | |
 
-**Clé de tri** (`cle_tri`) : numéro principal sur 5 chiffres, suffixe sur 3 : `premier` → `00001.000`,
-`25` → `00025.000`, `25-1` → `00025.001`, `66-1` → `00066.001`. Le libellé officiel reste dans `numero`.
+**Identifiant d'article** : `article.id` = `legal_text.article_id_prefix` + `-art-` + numéro en chiffres, calculé **une fois**
+à la création (`const-art-1` pour l'article premier, comme l'app l'utilise déjà ; `const-art-25-1`), jamais recalculé
+même si l'article est renuméroté (RG-01).
+
+**Clé de tri** (`sort_key`) : numéro principal sur 5 chiffres, suffixe sur 3 : `premier` → `00001.000`,
+`25` → `00025.000`, `25-1` → `00025.001`, `66-1` → `00066.001`. Le libellé officiel reste dans `number`.
+
+**Les versions validées et publiées** comptent toutes deux pour les contraintes de période : une version publiée
+garde ses dates, elle ne sort pas de la règle de non-chevauchement.
 
 ---
 

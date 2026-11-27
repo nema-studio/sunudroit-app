@@ -35,8 +35,11 @@ Les diagrammes sont écrits en **Mermaid**, directement dans le Markdown :
 
 Les **diagrammes de classes** existent aussi au format **Excalidraw**, un fichier par module, dans
 [`excalidraw/`](excalidraw/) : ouvrir sur [excalidraw.com](https://excalidraw.com) (menu ☰ › Ouvrir) ou dans VS Code
-avec l'extension *Excalidraw* (pomdtr). Ils sont modifiables à la main ; s'ils divergent du modèle Mermaid,
-c'est [05](05-modele-domaine.md) qui fait foi.
+avec l'extension *Excalidraw* (pomdtr). Ils portent les **noms du code, en anglais** (DEC-18).
+Les fichiers Excalidraw et les blocs Mermaid de [05](05-modele-domaine.md) sont produits par le même générateur
+([`excalidraw/generator/`](excalidraw/generator/)) : pour changer un diagramme, modifier `gen.py`, relancer
+`python3 gen.py ..` depuis ce dossier, puis recopier les blocs `.mmd` dans 05. Une retouche faite à la main dans
+Excalidraw est perdue à la génération suivante.
 
 Un diagramme se modifie comme du texte : quand le modèle change, on met à jour le bloc Mermaid
 dans le même commit que le code concerné.
@@ -49,8 +52,8 @@ dans le même commit que le code concerné.
   les tickets et les commits : « applique RG-07 ».
 - **Écrans** : numérotés comme dans la maquette Figma (`E06` = « 06 · Accueil »).
 - **Version** : `V1` = lancement public ; `V2` = évolutions prévues ensuite ; `Plus tard` = idée notée, non planifiée.
-- **Noms dans les diagrammes** : sans accents ni espaces (`VersionArticle`), pour rester compatibles
-  avec Java et SQL. Le libellé lisible est donné dans le texte.
+- **Noms dans les diagrammes** : les noms du code, en anglais (`ArticleVersion`, `legal_text`), comme décidé en DEC-18.
+  La correspondance avec le vocabulaire métier français est dans [05](05-modele-domaine.md).
 
 ## Glossaire
 
